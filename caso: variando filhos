@@ -170,37 +170,37 @@ if __name__=='__main__':
 
                 #   main
                 inicio = time.perf_counter()
-                mat_pais = aleatorio_pais(cromossomo, pais) #Funcao que escolhe numero aleatorio entre 1 a 1
-                anterior = 0
+                matriz_pais = aleatorio_pais(cromossomo, pais) #Funcao que escolhe numero aleatorio entre 1 a 1
+                melhor_apto = 0
                 iter = 0
                 sigma = np.ones((cromossomo, pais))
                 while 1:  
                     #print(f'Matriz pais:\n{mat_pais}\nSigma: \n{sigma}')
-                    familia, sigma_familia = adiciona_os_filhos(mat_pais,cromossomo, pais, pais+ filhos, sigma)
+                    familia, sigma_familia = adiciona_os_filhos(matriz_pais,cromossomo, pais, pais+ filhos, sigma)
                     #print(f'Familia com mutação:\n{familia}\nSigma com mutação:\n{sigma_familia}')
                     
-                    mat_pais, mais_forte, sigma = melhores_frutos(familia,pais + filhos,cromossomo, pais, sigma_familia)
+                    matriz_pais, mais_forte_geracao_atual, sigma = melhores_frutos(familia,pais + filhos,cromossomo, pais, sigma_familia)
                     
-                    if mais_forte < anterior or iter == 0:
-                        atributos_do_mais_apito = primeira_coluna(mat_pais)
+                    if mais_forte_geracao_atual < melhor_apto or iter == 0:
+                        atributos_do_mais_apito = primeira_coluna(matriz_pais)
                         atributos_do_mais_apito_sigma = primeira_coluna(sigma)
-                        anterior = mais_forte
+                        melhor_apto = mais_forte_geracao_atual
                     #print(f'Novo pais: \n{mat_pais}\nNovo sigma:\n{sigma }')
-                    print(f'{mais_forte}')
+                    print(f'{mais_forte_geracao_atual}')
                     iter = iter + 1
-                    if iter >= iteracoes_maximas or mais_forte <= criterio_parada:
-                        if mais_forte < criterio_parada:
+                    if iter >= iteracoes_maximas or mais_forte_geracao_atual <= criterio_parada:
+                        if mais_forte_geracao_atual < criterio_parada:
                             print(f'\n\nPopulacao tendeu a {criterio_parada}.\n\n')
                         else:
                             print(f'A populacao nao chegou ao objetivo de {criterio_parada}.')
                         print(f'Geracao: {iter}')
-                        print(f'Ultima geração: \n{mat_pais}')
+                        print(f'Ultima geração: \n{matriz_pais}')
                         fim = time.perf_counter()
                         tempo = round(fim - inicio, 15)
                         print(f'O algoritmo teve um tempo de {tempo} s')
                         print(f'O melhor individuo em todas as gerações {atributos_do_mais_apito}')
                         atributos_do_mais_apito = np.concatenate((atributos_do_mais_apito, atributos_do_mais_apito_sigma))
-                        atributos_do_mais_apito = np.append(atributos_do_mais_apito, [mais_forte,tempo, iter])
+                        atributos_do_mais_apito = np.append(atributos_do_mais_apito, [melhor_apto,tempo, iter])
                         vencedor.append(atributos_do_mais_apito)
                         aux.append(atributos_do_mais_apito)
 
