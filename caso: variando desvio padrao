@@ -1,0 +1,220 @@
+'''
+Universidade Federal do Maranhão
+Agortimo genetico basico  
+Linguagem: Python
+Orientador: Prof. Osvaldo Saavedra
+Discente: Fabricio de Araujo Santos
+Descrição: Este é um algoritmo que tem como base na evolução proposta por darwin
+'''
+
+import traceback
+import numpy as np
+import random
+import matplotlib.pyplot as plt
+import time
+import math
+import pandas as pd
+media = 0.4
+
+def primeira_coluna(matriz):
+    return matriz[:,0]
+
+
+def aleatorio_pais(aux_atributo, aux_pais):
+    #Essa funcao serve apenas para acha numero aleatorios para o pais, na sua forma funcional precisa de entrada
+    mat = np.zeros((aux_atributo, aux_pais))
+    for i in range(aux_atributo):
+        for j in range(aux_pais):
+            mat[i][j] = random.randint(1,10) #funcao que acha um numero aleatorio entre esses valores
+    return mat
+
+
+def selecao_de_pais_funcao(x): 
+    # essa funcao tem como objetivo acha uma quantidade aleatoria de pais para cada individuo
+    lista = list()
+    quantidade_pais = random.randint(2,x) #AQUI SELECIONA A QUANTIDADE DE PAIS QUE O INDIVIDUO TERA, COM A CONDICAO DE SER NO MINIMO 2 E MAXIMO X.
+    papais = list()
+    for i in range(0, x):
+        lista.append(i)
+    for i in range(quantidade_pais): 
+        aux = random.choice(lista) #ESCOLHE O PAI 
+        papais.append(aux)  
+        lista.remove(aux)   #REMOVE O PAI JA ESCOLHIDO
+    return papais
+
+
+def heranca(papais, i, matP, aux__sigma):
+    aleatorio = random.choice(papais) #ESCOLHE O PAI A SER O DOADOR DO ATRIBUTO
+    valor_heranca = matP[i][aleatorio] #PEGA O VALOR DA HERANCA
+    desvio_heranca = aux__sigma[i][aleatorio]
+    return valor_heranca, desvio_heranca
+
+
+def operador(valor_individuo, numero_individuo,aux_sigma):
+    #Essa funcao é a mutacao dos filhos
+    #t' = raiz_quadrada(2 * N)^ -1
+    tau_linha = ((2 * (numero_individuo)) ** (0.5))  ** (-1)
+    #t = raiz_na_quarta(4 * N)^ -1
+    tau = ((4 * (numero_individuo)) ** (0.25)) ** (-1)
+    #sigma_linha = sigma * e **(t' * N(0,1) + t * Nj(0,1))
+    sigma_linha =aux_sigma * (math.e ** (tau_linha * random.gauss(0, media) + tau * valor_individuo))
+    return sigma_linha
+
+
+def adiciona_os_filhos(matP, aux_atributos , number_pais, total,aux_sigma):
+    #FUNÇÃO RESPONSAVEL POR GERAL OS FILHOS, COM TODOS OS PAIS DA GERAÇÃO, JUNTO COM A MULTAÇÃO
+    matriz_familia = np.zeros((aux_atributos, total))
+    familia_sigma = np.zeros((aux_atributos, total))
+    for i in range(aux_atributos):  #ESSE LOOP ADICIONA OS PAIS A MATRIZ QUE CONTEM OS FILHOS PARA QUE EM OUTRA FUNCAO HAJA COMPETIÇÃO
+        for j in range(number_pais):
+            matriz_familia[i][j] = matP[i][j]
+            familia_sigma[i][j] = aux_sigma[i][j]
+    selecao_pais = list()
+    aleatorio_individuo = list()
+    for i in range(number_pais, total): #Esse loop escolhe os pais de cada filho
+        selecao_de_pais_aux = selecao_de_pais_funcao(len(matP[0]))        
+        selecao_pais.append(selecao_de_pais_aux.copy()) 
+    for i in range(aux_atributos):
+        for j in range(number_pais,total):
+            aux = j - number_pais
+            #Obtem a heranca de um dos pais em determinado j
+            aux_heranca, desvio_heranca = heranca(selecao_pais[aux], i, matP, aux_sigma)
+            #Adiciona a heracao dos pais 
+            matriz_familia[i][j] = aux_heranca
+            #Adiciona o desvio a matriz de desvio
+            familia_sigma[i][j] = desvio_heranca
+    #print(f'Familia:\n{matriz_familia}\nSigma familia:\n{familia_sigma}')
+    for i in range(total):
+        #Procura a N(0,1) que sera multiplicada por tau que é uma caracteristica do individuo
+        aux = random.gauss(0, media)
+        aleatorio_individuo.append(aux) 
+    for i in range(aux_atributos):
+        for j in range(total):
+            aux = aleatorio_individuo[j]
+            familia_sigma[i][j] = operador(aux, aux_atributos, familia_sigma[i][j])
+    for i in range(aux_atributos):
+        for j in range(total):
+            matriz_familia[i][j] = matriz_familia[i][j] + random.gauss(0, media) * familia_sigma[i][j]
+    return matriz_familia, familia_sigma
+
+
+def funcao_fitness(matriz_populacao, total, linha):
+    vetor = list()
+    for i in range(total): #funcao para somar os atributos de cada habitante
+        cont = 0
+        for j in range(linha):
+            #ROSENBROCK FUNCTION
+            cont = cont + matriz_populacao[j][i] ** 2
+        vetor.append(cont) #Esse vetor e o somatorio dos atributos 
+    return vetor
+    
+
+def indices_dos_x_menores_valores(vetor, x):
+    if not vetor:
+        return []  # Retorna uma lista vazia se o vetor estiver vazio
+
+    indices = sorted(range(len(vetor)), key=lambda i: vetor[i])[:x]
+    return indices
+
+
+def melhores_frutos(populacao,total, numero_cromossomo, numero_pai, sigma_aux):
+    #Faz o calculo da funcao fitness e ordena os melhores
+    valores_avaliados = funcao_fitness(populacao, total, numero_cromossomo)
+    #print(f'aptidão: {valores_avaliados}')
+    indices_menores = indices_dos_x_menores_valores(valores_avaliados, numero_pai)
+    #print(f'Indice dos melhores: {indices_menores}')
+    #OS MELHORES
+    melhores_da_rodada = np.zeros((numero_cromossomo, numero_pai))
+    sigma_melhor = np.zeros((numero_cromossomo, numero_pai))
+    for j in range(numero_pai): #adiciona os melhores da rodada em uma matriz
+        for i in range(numero_cromossomo):
+            aux = indices_menores[j]
+            melhores_da_rodada[i][j] = populacao[i][aux]
+            sigma_melhor[i][j] = sigma_aux[i][aux]
+    return melhores_da_rodada, valores_avaliados[indices_menores[0]], sigma_melhor
+
+
+def tabela(x, name):
+    df = pd.DataFrame(x)
+    df.to_excel(f'{name}.xlsx', index=False)
+    print('\nARQUIVO SALVO.\n')
+
+
+def funcao_media_tabela(aux_valores):
+    resultado_media = list()
+    for i in range(len(aux_valores[0])): #colunas
+        cont = 0
+        for j in range(len(aux_valores)):# linhas
+            cont = aux_valores[j][i] + cont
+        cont = cont / (len(aux_valores))
+        resultado_media.append(cont)
+    return resultado_media
+
+    
+
+if __name__=='__main__':
+    try:
+        vencedor = list()
+        vencedor_media = list()
+        aux = list()
+        teste = [1,5,10,20,50]
+        for i in range(5):
+            for j in range(5):
+                inicio = time.perf_counter()
+                #   Variaveis iniciais
+                pais = 10
+                filhos = 10
+                cromossomo = 10
+                melhores_valores_funcao_fitness = list()
+                iteracoes_maximas = 10000
+                criterio_parada = 10 ** (-10)
+
+                #   main
+                inicio = time.perf_counter()
+                matriz_pais = aleatorio_pais(cromossomo, pais) #Funcao que escolhe numero aleatorio entre 1 a 1
+                melhor_apto = 0
+                iter = 0
+                sigma = np.ones((cromossomo, pais))
+                sigma = np.full((cromossomo, pais), teste[i])
+                while 1:  
+                    #print(f'Matriz pais:\n{mat_pais}\nSigma: \n{sigma}')
+                    familia, sigma_familia = adiciona_os_filhos(matriz_pais,cromossomo, pais, pais+ filhos, sigma)
+                    #print(f'Familia com mutação:\n{familia}\nSigma com mutação:\n{sigma_familia}')
+                    
+                    matriz_pais, mais_forte_geracao_atual, sigma = melhores_frutos(familia,pais + filhos,cromossomo, pais, sigma_familia)
+                    
+                    if mais_forte_geracao_atual < melhor_apto or iter == 0:
+                        atributos_do_mais_apito = primeira_coluna(matriz_pais)
+                        atributos_do_mais_apito_sigma = primeira_coluna(sigma)
+                        melhor_apto = mais_forte_geracao_atual
+                    #print(f'Novo pais: \n{mat_pais}\nNovo sigma:\n{sigma }')
+                    print(f'{mais_forte_geracao_atual}')
+                    iter = iter + 1
+                    if iter >= iteracoes_maximas or mais_forte_geracao_atual <= criterio_parada:
+                        if mais_forte_geracao_atual < criterio_parada:
+                            print(f'\n\nPopulacao tendeu a {criterio_parada}.\n\n')
+                        else:
+                            print(f'A populacao nao chegou ao objetivo de {criterio_parada}.')
+                        print(f'Geracao: {iter}')
+                        print(f'Ultima geração: \n{matriz_pais}')
+                        fim = time.perf_counter()
+                        tempo = round(fim - inicio, 15)
+                        print(f'O algoritmo teve um tempo de {tempo} s')
+                        print(f'O melhor individuo em todas as gerações {atributos_do_mais_apito}')
+                        atributos_do_mais_apito = np.concatenate((atributos_do_mais_apito, atributos_do_mais_apito_sigma))
+                        atributos_do_mais_apito = np.append(atributos_do_mais_apito, [melhor_apto,tempo, iter])
+                        vencedor.append(atributos_do_mais_apito)
+                        aux.append(atributos_do_mais_apito)
+
+                        break
+            vencedor_media.append(funcao_media_tabela(aux)) 
+            aux.clear()
+        tabela(vencedor, 'variacao_desvio_padrao')
+        tabela(vencedor_media, 'variacao_desvio_padrao_media')
+            
+            
+            
+    except Exception as erro:
+        print('ERRO!!!\n%s'%(erro.args))
+        traceback.print_exc()
+        
