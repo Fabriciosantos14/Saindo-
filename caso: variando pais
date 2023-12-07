@@ -157,6 +157,7 @@ if __name__=='__main__':
         vencedor = list()
         vencedor_media = list()
         aux = list()
+        tabela_trajetoria = list()
         for i in range(1, 6):
             for j in range(5):
                 inicio = time.perf_counter()
@@ -167,14 +168,15 @@ if __name__=='__main__':
                 melhores_valores_funcao_fitness = list()
                 iteracoes_maximas = 10000
                 criterio_parada = 10 ** (-10)
-                trajetoria = list()
-                multiplicador = 2
+
                 #   main
                 inicio = time.perf_counter()
                 matriz_pais = aleatorio_pais(cromossomo, pais) #Funcao que escolhe numero aleatorio entre 1 a 1
                 melhor_apto = 0
                 iter = 0
                 sigma = np.ones((cromossomo, pais))
+                trajetoria = list()
+                multiplicador = 2
                 while 1:  
                     #print(f'Matriz pais:\n{mat_pais}\nSigma: \n{sigma}')
                     familia, sigma_familia = adiciona_os_filhos(matriz_pais,cromossomo, pais, pais+ filhos, sigma)
@@ -187,15 +189,14 @@ if __name__=='__main__':
                         atributos_do_mais_apito_sigma = primeira_coluna(sigma)
                         melhor_apto = mais_forte_geracao_atual
                     #print(f'Novo pais: \n{mat_pais}\nNovo sigma:\n{sigma }')
+
                     print(f'{mais_forte_geracao_atual}')
                     iter = iter + 1
-                    
                     #
                     if mais_forte_geracao_atual < 10 ** (-2 * multiplicador):
                         trajetoria.append(iter)
                         multiplicador = multiplicador + 1
                     #
-                    
                     if iter >= iteracoes_maximas or mais_forte_geracao_atual <= criterio_parada:
                         if mais_forte_geracao_atual < criterio_parada:
                             print(f'\n\nPopulacao tendeu a {criterio_parada}.\n\n')
@@ -206,18 +207,20 @@ if __name__=='__main__':
                         fim = time.perf_counter()
                         tempo = round(fim - inicio, 15)
                         print(f'O algoritmo teve um tempo de {tempo} s')
-                        print(f'Trajetoria: {trajetoria}')
                         print(f'O melhor individuo em todas as gerações {atributos_do_mais_apito}')
                         atributos_do_mais_apito = np.concatenate((atributos_do_mais_apito, atributos_do_mais_apito_sigma))
                         atributos_do_mais_apito = np.append(atributos_do_mais_apito, [melhor_apto,tempo, iter])
                         vencedor.append(atributos_do_mais_apito)
                         aux.append(atributos_do_mais_apito)
+                        tabela_trajetoria.append(trajetoria)
 
                         break
             vencedor_media.append(funcao_media_tabela(aux)) 
             aux.clear()
+
         tabela(vencedor, 'variacao_pais')
         tabela(vencedor_media, 'variacao_pais_media')
+        tabela(tabela_trajetoria, 'trajetoria_pais')
             
             
             
