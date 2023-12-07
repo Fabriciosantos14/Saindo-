@@ -157,6 +157,7 @@ if __name__=='__main__':
         vencedor = list()
         vencedor_media = list()
         aux = list()
+        tabela_trajetoria = list()
         teste = [1,5,10,20,50]
         for i in range(5):
             for j in range(5):
@@ -174,8 +175,9 @@ if __name__=='__main__':
                 matriz_pais = aleatorio_pais(cromossomo, pais) #Funcao que escolhe numero aleatorio entre 1 a 1
                 melhor_apto = 0
                 iter = 0
-                sigma = np.ones((cromossomo, pais))
                 sigma = np.full((cromossomo, pais), teste[i])
+                trajetoria = list()
+                multiplicador = 2
                 while 1:  
                     #print(f'Matriz pais:\n{mat_pais}\nSigma: \n{sigma}')
                     familia, sigma_familia = adiciona_os_filhos(matriz_pais,cromossomo, pais, pais+ filhos, sigma)
@@ -188,8 +190,14 @@ if __name__=='__main__':
                         atributos_do_mais_apito_sigma = primeira_coluna(sigma)
                         melhor_apto = mais_forte_geracao_atual
                     #print(f'Novo pais: \n{mat_pais}\nNovo sigma:\n{sigma }')
+
                     print(f'{mais_forte_geracao_atual}')
                     iter = iter + 1
+                    #
+                    if mais_forte_geracao_atual < 10 ** (-2 * multiplicador):
+                        trajetoria.append(iter)
+                        multiplicador = multiplicador + 1
+                    #
                     if iter >= iteracoes_maximas or mais_forte_geracao_atual <= criterio_parada:
                         if mais_forte_geracao_atual < criterio_parada:
                             print(f'\n\nPopulacao tendeu a {criterio_parada}.\n\n')
@@ -205,12 +213,15 @@ if __name__=='__main__':
                         atributos_do_mais_apito = np.append(atributos_do_mais_apito, [melhor_apto,tempo, iter])
                         vencedor.append(atributos_do_mais_apito)
                         aux.append(atributos_do_mais_apito)
+                        tabela_trajetoria.append(trajetoria)
 
                         break
             vencedor_media.append(funcao_media_tabela(aux)) 
             aux.clear()
+
         tabela(vencedor, 'variacao_desvio_padrao')
         tabela(vencedor_media, 'variacao_desvio_padrao_media')
+        tabela(tabela_trajetoria, 'trajetoria_desvio_padrao')
             
             
             
