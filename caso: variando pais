@@ -167,7 +167,8 @@ if __name__=='__main__':
                 melhores_valores_funcao_fitness = list()
                 iteracoes_maximas = 10000
                 criterio_parada = 10 ** (-10)
-
+                trajetoria = list()
+                multiplicador = 2
                 #   main
                 inicio = time.perf_counter()
                 matriz_pais = aleatorio_pais(cromossomo, pais) #Funcao que escolhe numero aleatorio entre 1 a 1
@@ -188,6 +189,13 @@ if __name__=='__main__':
                     #print(f'Novo pais: \n{mat_pais}\nNovo sigma:\n{sigma }')
                     print(f'{mais_forte_geracao_atual}')
                     iter = iter + 1
+                    
+                    #
+                    if mais_forte_geracao_atual < 10 ** (-2 * multiplicador):
+                        trajetoria.append(iter)
+                        multiplicador = multiplicador + 1
+                    #
+                    
                     if iter >= iteracoes_maximas or mais_forte_geracao_atual <= criterio_parada:
                         if mais_forte_geracao_atual < criterio_parada:
                             print(f'\n\nPopulacao tendeu a {criterio_parada}.\n\n')
@@ -198,6 +206,7 @@ if __name__=='__main__':
                         fim = time.perf_counter()
                         tempo = round(fim - inicio, 15)
                         print(f'O algoritmo teve um tempo de {tempo} s')
+                        print(f'Trajetoria: {trajetoria}')
                         print(f'O melhor individuo em todas as gerações {atributos_do_mais_apito}')
                         atributos_do_mais_apito = np.concatenate((atributos_do_mais_apito, atributos_do_mais_apito_sigma))
                         atributos_do_mais_apito = np.append(atributos_do_mais_apito, [melhor_apto,tempo, iter])
