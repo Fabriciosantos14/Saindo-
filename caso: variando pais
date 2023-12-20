@@ -167,16 +167,16 @@ if __name__=='__main__':
                 cromossomo = 10
                 melhores_valores_funcao_fitness = list()
                 iteracoes_maximas = 10000
-                criterio_parada = 10 ** (-10)
+                criterio_parada = 0
 
                 #   main
                 inicio = time.perf_counter()
-                matriz_pais = aleatorio_pais(cromossomo, pais) #Funcao que escolhe numero aleatorio entre 1 a 1
+                matriz_pais = aleatorio_pais(cromossomo, pais) #Funcao que escolhe numero aleatorio entre 1 a 10
                 melhor_apto = 0
                 iter = 0
                 sigma = np.ones((cromossomo, pais))
                 trajetoria = list()
-                multiplicador = 2
+                multiplicador = 1
                 while 1:  
                     #print(f'Matriz pais:\n{mat_pais}\nSigma: \n{sigma}')
                     familia, sigma_familia = adiciona_os_filhos(matriz_pais,cromossomo, pais, pais+ filhos, sigma)
@@ -193,7 +193,7 @@ if __name__=='__main__':
                     print(f'{mais_forte_geracao_atual}')
                     iter = iter + 1
                     #
-                    if mais_forte_geracao_atual < 10 ** (-2 * multiplicador):
+                    if mais_forte_geracao_atual <= 10 ** (-2 * multiplicador):
                         trajetoria.append(iter)
                         multiplicador = multiplicador + 1
                     #
