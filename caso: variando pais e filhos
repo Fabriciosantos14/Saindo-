@@ -25,7 +25,7 @@ def aleatorio_pais(aux_atributo, aux_pais):
     mat = np.zeros((aux_atributo, aux_pais))
     for i in range(aux_atributo):
         for j in range(aux_pais):
-            mat[i][j] = random.randint(1,10) #funcao que acha um numero aleatorio entre esses valores
+            mat[i][j] = random.randint(1, 10) #funcao que acha um numero aleatorio entre esses valores
     return mat
 
 
@@ -140,7 +140,7 @@ def tabela(x, name):
     print('\nARQUIVO SALVO.\n')
 
 
-def funcao_media_tabela(aux_valores):
+def media_aritmetrica(aux_valores):
     resultado_media = list()
     for i in range(len(aux_valores[0])): #colunas
         cont = 0
@@ -158,7 +158,7 @@ if __name__=='__main__':
         vencedor_media = list()
         aux = list()
         tabela_trajetoria = list()
-        for i in range(1, 6):
+        for i in range(1,6):
             for j in range(5):
                 inicio = time.perf_counter()
                 #   Variaveis iniciais
@@ -167,16 +167,17 @@ if __name__=='__main__':
                 cromossomo = 10
                 melhores_valores_funcao_fitness = list()
                 iteracoes_maximas = 10000
-                criterio_parada = 10 ** (-10)
+                criterio_parada = 0
 
                 #   main
                 inicio = time.perf_counter()
-                matriz_pais = aleatorio_pais(cromossomo, pais) #Funcao que escolhe numero aleatorio entre 1 a 1
+                matriz_pais = aleatorio_pais(cromossomo, pais) #Funcao que escolhe numero aleatorio entre 1 a 10
                 melhor_apto = 0
                 iter = 0
+                melhor_geracao = 0
                 sigma = np.ones((cromossomo, pais))
                 trajetoria = list()
-                multiplicador = 2
+                multiplicador = 1
                 while 1:  
                     #print(f'Matriz pais:\n{mat_pais}\nSigma: \n{sigma}')
                     familia, sigma_familia = adiciona_os_filhos(matriz_pais,cromossomo, pais, pais+ filhos, sigma)
@@ -188,12 +189,14 @@ if __name__=='__main__':
                         atributos_do_mais_apito = primeira_coluna(matriz_pais)
                         atributos_do_mais_apito_sigma = primeira_coluna(sigma)
                         melhor_apto = mais_forte_geracao_atual
+                        melhor_geracao = iter
+                        
                     #print(f'Novo pais: \n{mat_pais}\nNovo sigma:\n{sigma }')
 
                     print(f'{mais_forte_geracao_atual}')
                     iter = iter + 1
                     #
-                    if mais_forte_geracao_atual < 10 ** (-2 * multiplicador):
+                    if mais_forte_geracao_atual <= 10 ** (-2 * multiplicador):
                         trajetoria.append(iter)
                         multiplicador = multiplicador + 1
                     #
@@ -209,18 +212,18 @@ if __name__=='__main__':
                         print(f'O algoritmo teve um tempo de {tempo} s')
                         print(f'O melhor individuo em todas as gerações {atributos_do_mais_apito}')
                         atributos_do_mais_apito = np.concatenate((atributos_do_mais_apito, atributos_do_mais_apito_sigma))
-                        atributos_do_mais_apito = np.append(atributos_do_mais_apito, [melhor_apto,tempo, iter])
+                        atributos_do_mais_apito = np.append(atributos_do_mais_apito, [melhor_apto,tempo, melhor_geracao])
                         vencedor.append(atributos_do_mais_apito)
                         aux.append(atributos_do_mais_apito)
                         tabela_trajetoria.append(trajetoria)
 
                         break
-            vencedor_media.append(funcao_media_tabela(aux)) 
+            vencedor_media.append(media_aritmetrica(aux)) 
             aux.clear()
 
-        tabela(vencedor, 'variacao_pais&filhos')
-        tabela(vencedor_media, 'variacao_pais&filhos_media')
-        tabela(tabela_trajetoria, 'trajetoria_pais&flhos')
+        tabela(vencedor, 'variacao_filhos&pais')
+        tabela(vencedor_media, 'variacao_filhos&pais_media')
+        tabela(tabela_trajetoria, 'trajetoria_filhos&pais')
             
             
             
