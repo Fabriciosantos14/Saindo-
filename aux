@@ -1,4 +1,4 @@
-#ALGORITMO DE MUTAÇÃO
+#Pra valer
 import traceback
 import numpy as np
 import random
@@ -8,7 +8,7 @@ import math
 import pandas as pd
 from statsmodels.tsa.arima.model import ARIMA
 import warnings
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
 
 
 def inicializacao_pais(aux_atributo, aux_pais, lim_i, lim_s):
@@ -107,24 +107,51 @@ def arima_residuo(history, p, d, q, y):
         print('MAE: '+str(mae))
         rmse = math.sqrt(mean_squared_error(y, predictions))
         print('RMSE: '+str(rmse))
+        mape = mean_absolute_percentage_error(y, predictions)
+        print(f"MAPE: {mape:.4f}")
+        aic = model_fit.aic
+        print(f'AIC: {aic}')
+        bic = model_fit.bic
+        print(f'BIC: {bic}')
+        texto = model_fit.summary()
+        residuo = model_fit.resid
+
     except:
         mse = 1000
         mae = 1000
         rmse = 1000
+        mape = 1000
+        aic = 1000
+        bic = 1000
+        texto = 'a'
+        residuo = 1000
+        predictions = 1000
         print('\nMSE: '+str(mse))
-    return mse, mae, rmse
+    return mse, mae, rmse, mape, aic, bic, texto, residuo, predictions
 
 
 def funcao_fitness(matriz_populacao, total, linha,data, y):
     vetor_mse = list()
     vetor_mae = list()
     vetor_rmse = list()
+    vetor_mape = list()
+    vetor_aic = list()
+    vetor_bic = list()
+    vetor_texto = list()
+    vetor_residuo = list()
+    vetor_predictions = list()
     for i in range(total):
-        mse, mae, rmse = arima_residuo(data, matriz_populacao[0][i], matriz_populacao[1][i], matriz_populacao[2][i], y)
+        mse, mae, rmse, mape, aic, bic, texto, residuo, predictions = arima_residuo(data, matriz_populacao[0][i], matriz_populacao[1][i], matriz_populacao[2][i], y)
         vetor_mse.append(mse) #Esse vetor é os valores das fitness dos individuos
         vetor_mae.append(mae)
         vetor_rmse.append(rmse)
-    return vetor_mse, vetor_mae, vetor_rmse
+        vetor_mape.append(mape)
+        vetor_aic.append(aic)
+        vetor_bic.append(bic)
+        vetor_texto.append(texto)
+        vetor_residuo.append(residuo)
+        vetor_predictions.append(predictions)
+    return vetor_mse, vetor_mae, vetor_rmse, vetor_mape, vetor_aic, vetor_bic, vetor_texto, vetor_residuo, vetor_predictions
 
 
 def selecao(valores_avaliados, populacao,total, numero_cromossomo, numero_pai):
@@ -154,6 +181,13 @@ def tabela(x, name):
     print('\nARQUIVO SALVO.\n')
 
 
+def arquivo_txt(conteudo, nome):
+    #transforma em arquivo de texto:
+    with open(f'{nome}.txt', 'w') as arquivo:
+        arquivo.write(conteudo)
+        print('Arquivo salvo em formato .bin')
+
+
 if __name__=='__main__':
   try:
     warnings.filterwarnings("ignore")
@@ -169,10 +203,10 @@ if __name__=='__main__':
     
     #   Variaveis iniciais
     pais = 5 #Número de pais na população
-    filhos = 2 #número de descendentes da população
+    filhos = 10 #número de descendentes da população
     cromossomo = 3 #Tamanho do cromossomo
     melhores_valores_funcao_fitness = list() #lista para guarda o melhor valor
-    iteracoes_maximas = 5 #Número de iterações maximas que o algoritmo deve realizar 
+    iteracoes_maximas = 20 #Número de iterações maximas que o algoritmo deve realizar 
     criterio_parada = 0 #Valor objetivo da função de aptidão
     lim_inferior = 1 #limite inferior para inicializar os genes
     lim_superior = 3 #limites superior para iniciliazar os genes
@@ -182,76 +216,45 @@ if __name__=='__main__':
     variavel_fitness = list()
     matriz_pais = inicializacao_pais(cromossomo, pais, lim_inferior, lim_superior)
     
-    dados_tabela = list()
+    tabela_1 = list()
+    tabela_2 = list()
      
     while 1:
         populacao = criar_populacao(matriz_pais, pais, cromossomo, filhos)
         populacao = mutacao(populacao, pais + filhos, cromossomo)
         print(populacao)
-        resultado_fitness, valor_mae, valor_rmse = funcao_fitness(populacao, pais + filhos, cromossomo, history, y)
+        resultado_fitness, valor_mae, valor_rmse,valor_mape, valor_aic, valor_bic, valor_texto, valor_residuo, valor_previsao = funcao_fitness(populacao, pais + filhos, cromossomo, history, y)
         matriz_pais, mais_forte_geracao_atual, indice_melhor_geracao = selecao(resultado_fitness, populacao, pais + filhos, cromossomo, pais)
         variavel_fitness.append(mais_forte_geracao_atual)
         if mais_forte_geracao_atual < melhor_apto or iter == 0: #if para armazenar o melhor algoritmo
             cromossomo_do_mais_apto = matriz_pais[:,0]
             melhor_apto = mais_forte_geracao_atual
-            geracao = [iter,cromossomo_do_mais_apto, melhor_apto, valor_mae[indice_melhor_geracao], valor_rmse[indice_melhor_geracao]]
-            dados_tabela.append(geracao)
-            melhor_geracao = iter
-
-        print(cromossomo_do_mais_apto)
-        print()
+            geracao = [iter,cromossomo_do_mais_apto, melhor_apto, valor_mae[indice_melhor_geracao], valor_rmse[indice_melhor_geracao],valor_mape[indice_melhor_geracao], valor_aic[indice_melhor_geracao], valor_bic[indice_melhor_geracao]]
+            tabela_1.append(geracao)
+            geracao_maior = [iter, valor_previsao[indice_melhor_geracao],'*', valor_residuo[indice_melhor_geracao]]
+            tabela_2.append(geracao_maior)
+            texto_relatorio = valor_texto[indice_melhor_geracao]
+            melhor_previsao = valor_previsao[indice_melhor_geracao]
 
         if iter >= iteracoes_maximas or mais_forte_geracao_atual <= criterio_parada:  #if para parar o algoritmo
-            print(f'Os melhores parametros para a função ARIMA foram:\n{cromossomo_do_mais_apto}\nObtidos na geração:\n{melhor_geracao}')
-            print(f'Com valor do erro medio quadratico de: {melhor_apto} ')
-            
-            predictions = list()
-            model = ARIMA(history, order=(cromossomo_do_mais_apto[0], cromossomo_do_mais_apto[1], cromossomo_do_mais_apto[2]))
-            model_fit = model.fit()
-            yhat = model_fit.forecast()[0]
-            predictions.append(yhat)
-            history.append(y[0])
-
-
-            for i in range(1, len(y)):
-                # predict
-                model = ARIMA(history, order=(cromossomo_do_mais_apto[0], cromossomo_do_mais_apto[1], cromossomo_do_mais_apto[2]))
-                model_fit = model.fit()
-                yhat = model_fit.forecast()[0]
-                # invert transformed prediction
-                predictions.append(yhat)
-                # observation
-                obs = y[i]
-                history.append(obs)
-                
-                
-            # report performance
-            mse = mean_squared_error(y, predictions)
-            print('MSE: '+str(mse))
-            mae = mean_absolute_error(y, predictions)
-            print('MAE: '+str(mae))
-            rmse = math.sqrt(mean_squared_error(y, predictions))
-            print('RMSE: '+str(rmse))
-
-            
             fim = time.perf_counter()
             tempo = round(fim - inicio, 15)
-            print(model_fit.summary())
             print(f'Tempo de execução: {tempo}')
-
-            tabela(dados_tabela, 'arima&ag')
-
+            tabela(tabela_1, 'avaliacao')
+            tabela(tabela_2, 'previsao e residuo')
+            print(texto_relatorio)
+            arquivo_txt(texto_relatorio, 'summary')
             ###
             plt.figure(figsize=(16,8))
             plt.plot(net_df.index[-600:], net_df['40m Wind Speed (m/s)'].tail(600), color='green', label = 'Real')
             plt.plot(test_data.index, y, color = 'red', label = 'Real test')
-            plt.plot(test_data.index, predictions, color = 'blue', label = 'Predicção')
-            plt.title('Wind Speed')
-            plt.xlabel('Time')
-            plt.ylabel('Wind')
+            plt.plot(test_data.index, melhor_previsao, color = 'blue', label = 'Predicção')
+            plt.title('Velocidade Vento')
+            plt.xlabel('Tempo')
+            plt.ylabel('(m/s))')
             plt.legend()
             plt.grid(True)
-            plt.savefig('arima_model.pdf')
+            plt.savefig('predicção.pdf')
             plt.show()
             break
 
